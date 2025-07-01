@@ -9,7 +9,7 @@ Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "TaxDocumentProcessor.Core",
 EndProject
 Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "TaxDocumentProcessor.Tests", "src\TaxDocumentProcessor.Tests\TaxDocumentProcessor.Tests.csproj", "{311ED669-935C-432F-B18E-D1BAF508098E}"
 EndProject
-Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "TaxDocumentProcessor_Functions", "src\TaxDocumentProcessor.Functions\TaxDocumentProcessor_Functions.csproj", "{44169172-3822-4D31-B743-66BCAA23D13A}"
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "TaxDocumentProcessor.Functions", "src\TaxDocumentProcessor.Functions\TaxDocumentProcessor.Functions.csproj", "{44169172-3822-4D31-B743-66BCAA23D13A}"
 EndProject
 Global
 	GlobalSection(SolutionConfigurationPlatforms) = preSolution
