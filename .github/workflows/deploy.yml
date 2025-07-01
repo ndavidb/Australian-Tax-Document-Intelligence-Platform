@@ -30,3 +30,31 @@ jobs:
         
       - name: Test
         run: dotnet test --no-restore --verbosity normal
+        
+      - name: Publish
+        run: dotnet publish ${{ env.AZURE_FUNCTIONAPP_PACKAGE_PATH }} --configuration Release --output ./publish 
+        
+      - name: Upload Artifact
+        uses: actions/upload-artifact@v3
+        with:
+          name: functionapp-app
+          path: ./publish
+          
+  deploy-infrastructure:
+    runs-on: ubuntu-22.04
+    needs: build-and-test
+    if: github.ref == 'refs/heads/main'
+    steps:
+      - uses: actions/checkout@v4
+              
+      - name: Login to Azure
+        uses: azure/login@v1
+        with:
+          creds: ${{ secrets.AZURE_CREDENTIALS }}
+          
+      - name: Deploy Bicep
+        uses: azure/arm-deploy@v1
+        with: 
+          resourceGroupName: ${{ secrets.AZURE_RG}}
+          template: ./infrastructure/main.bicep
+          parameters: environment=dev

@@ -18,8 +18,6 @@ A serverless document processing system that helps Australian small business own
 
 ## 📋 Architecture
 
-[Architecture diagram will be added in Stage 5]
-
 ## 🛠️ Tech Stack
 
 - **Runtime**: .NET 8 / C#
@@ -40,27 +38,27 @@ A serverless document processing system that helps Australian small business own
 ### Local Development Setup
 
 1. Clone the repository:
-   \`\`\`bash
-   git clone https://github.com/yourusername/TaxDocumentProcessor.git
+   ```bash
+   git clone https://github.com/ndavidb/TaxDocumentProcessor.git
    cd TaxDocumentProcessor
-   \`\`\`
+   ```
 
 2. Install dependencies:
-   \`\`\`bash
+   ```bash
    dotnet restore
-   \`\`\`
+   ```
 
 3. Configure local settings:
-   \`\`\`bash
+   ```bash
    cp src/TaxDocumentProcessor.Functions/local.settings.sample.json src/TaxDocumentProcessor.Functions/local.settings.json
    # Edit local.settings.json with your Azure Storage connection string
-   \`\`\`
+   ```
 
 4. Run locally:
-   \`\`\`bash
+   ```bash
    cd src/TaxDocumentProcessor.Functions
    func start
-   \`\`\`
+   ```
 
 ## 📚 Documentation
 
