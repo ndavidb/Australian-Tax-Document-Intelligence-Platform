@@ -62,9 +62,12 @@ resource appServicePlan 'Microsoft.Web/serverfarms@2024-04-01' = {
   name: appServicePlanName
   location: location
   sku: {
-    tier: 'FlexConsumption'
-    name: 'FC1'
-  }
+      name: 'Y1'
+      tier: 'Dynamic'
+    }
+    properties: {
+      reserved: true  // For Linux
+    }
 }
 
 resource functionApp 'Microsoft.Web/sites@2024-04-01' = {
