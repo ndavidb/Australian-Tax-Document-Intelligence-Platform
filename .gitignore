@@ -1,0 +1,21 @@
+## Azure Functions
+local.settings.json
+*.azureauth
+
+## .NET
+bin/
+obj/
+*.user
+*.userosscache
+*.sln.docstates
+
+## VS Code
+.vscode/
+*.code-workspace
+
+## OS
+.DS_Store
+Thumbs.db
+
+## Jetbrains
+.idea
