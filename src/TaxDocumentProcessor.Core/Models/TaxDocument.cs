@@ -6,7 +6,7 @@ public class TaxDocument
     public string FileName { get; set; } = string.Empty;
     public DateTime UploadedAt { get; set; }
     public DocumentStatus Status { get; set; } = DocumentStatus.Pending;
-    public ExpenseDetails? ExpenseDetails { get; set; }
+    public ExpenseDetails? ExtractedData { get; set; }
     public string? ProcessingError { get; set; } = null;
 }
 

@@ -5,7 +5,7 @@
     <OutputType>Exe</OutputType>
     <ImplicitUsings>enable</ImplicitUsings>
     <Nullable>enable</Nullable>
-    <RootNamespace>TaxDocumentProcessor_Functions</RootNamespace>
+    <RootNamespace>TaxDocumentProcessor.Functions</RootNamespace>
     <UserSecretsId>3039506a-f549-44c9-88d0-a61efcdeca5a</UserSecretsId>
   </PropertyGroup>
   <ItemGroup>
