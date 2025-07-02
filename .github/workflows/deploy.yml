@@ -1,90 +1,133 @@
-﻿name: deploy.yml
+﻿name: Deploy Tax Document Processor
 on:
-    push:
-        branches:
-        - main
-    pull_request:
-        branches:
-        - main
+  push:
+    branches:
+      - main
+  pull_request:
+    branches:
+      - main
 
 env:
   AZURE_FUNCTIONAPP_PACKAGE_PATH: 'src/TaxDocumentProcessor.Functions'
   DOTNET_VERSION: '8.0.x'
-  
+  OUTPUT_PATH: ${{ github.workspace }}/output
+
 jobs:
   build-and-test:
     runs-on: ubuntu-22.04
     steps:
       - uses: actions/checkout@v4
-        
+
       - name: Setup .NET
         uses: actions/setup-dotnet@v4
         with:
           dotnet-version: ${{ env.DOTNET_VERSION }}
-          
+
       - name: Restore dependencies
         run: dotnet restore
-        
+
       - name: Build
         run: dotnet build --configuration Release --no-restore
-        
+
       - name: Test
-        run: dotnet test --no-restore --verbosity normal
-        
-      - name: Publish
-        run: dotnet publish ${{ env.AZURE_FUNCTIONAPP_PACKAGE_PATH }} --configuration Release --output ./publish 
-        
-      - name: Upload Artifact
+        run: dotnet test --no-restore --verbosity normal --logger trx --results-directory "${{ github.workspace }}/TestResults"
+
+      - name: Upload test results
+        uses: actions/upload-artifact@v4
+        if: always()
+        with:
+          name: test-results
+          path: ${{ github.workspace }}/TestResults
+          retention-days: 7
+
+      - name: Build Functions for Deployment
+        shell: pwsh
+        run: |
+          pushd './${{ env.AZURE_FUNCTIONAPP_PACKAGE_PATH }}'
+          dotnet build --configuration Release
+          dotnet publish --configuration Release --output ${{ env.OUTPUT_PATH }} --no-self-contained --no-restore
+          popd
+
+      - name: Package Functions
+        run: |
+          cd ${{ env.OUTPUT_PATH }}
+          zip -r ../functions-package.zip .
+
+      - name: Upload Functions Package
         uses: actions/upload-artifact@v4
         with:
-          name: functionapp-app
-          path: ./publish
-          
+          name: functions-package
+          path: functions-package.zip
+          retention-days: 1
+  
   deploy-infrastructure:
     runs-on: ubuntu-22.04
     needs: build-and-test
     if: github.ref == 'refs/heads/main'
     outputs:
       functionAppName: ${{ steps.deploy-bicep.outputs.functionAppName }}
+      storageAccountName: ${{ steps.deploy-bicep.outputs.storageAccountName }}
+      resourceGroup: ${{ steps.set-vars.outputs.resourceGroup }}
     steps:
       - uses: actions/checkout@v4
-              
+
+      - name: Set variables
+        id: set-vars
+        run: |
+          echo "resourceGroup=${{ secrets.AZURE_RG }}" >> $GITHUB_OUTPUT
+
       - name: Login to Azure
         uses: azure/login@v1
         with:
           creds: ${{ secrets.AZURE_CREDENTIALS }}
-          
+
       - name: Deploy Bicep
         id: deploy-bicep
         uses: azure/arm-deploy@v1
         with:
-          resourceGroupName: ${{ secrets.AZURE_RG}}
+          resourceGroupName: ${{ secrets.AZURE_RG }}
           template: ./infrastructure/main.bicep
           parameters: environment=dev
-          scope: ''
+          deploymentName: github-${{ github.run_id }}
+          failOnStdErr: false
+
+      - name: Get Deployment Outputs
+        id: get-outputs
+        run: |
+          outputs=$(az deployment group show \
+            --resource-group ${{ secrets.AZURE_RG }} \
+            --name github-${{ github.run_id }} \
+            --query properties.outputs)
           
+          functionAppName=$(echo $outputs | jq -r .functionAppName.value)
+          storageAccountName=$(echo $outputs | jq -r .storageAccountName.value)
+          
+          echo "functionAppName=$functionAppName" >> $GITHUB_OUTPUT
+          echo "storageAccountName=$storageAccountName" >> $GITHUB_OUTPUT
+  
   deploy-function-app:
     runs-on: ubuntu-22.04
     needs: [build-and-test, deploy-infrastructure]
     if: github.ref == 'refs/heads/main'
     steps:
       - uses: actions/checkout@v4
-      
-      - name: Download Artifact
+
+      - name: Download Functions Package
         uses: actions/download-artifact@v4
         with:
-          name: functionapp-app
-          path: ./publish
-          
+          name: functions-package
+
       - name: Login to Azure
         uses: azure/login@v1
         with:
           creds: ${{ secrets.AZURE_CREDENTIALS }}
-          
+      
+      # Option 1: Using Azure Functions Action (Recommended)
       - name: Deploy to Azure Functions
         uses: Azure/functions-action@v1
+        id: deploy-functions
         with:
           app-name: ${{ needs.deploy-infrastructure.outputs.functionAppName }}
-          package: ./publish
-          scm-do-build-during-deployment: false
-          enable-oryx-build: false
+          package: functions-package.zip
+          publish-profile: ${{ secrets.AZURE_FUNCTIONAPP_PUBLISH_PROFILE }}
+          respect-funcignore: true
