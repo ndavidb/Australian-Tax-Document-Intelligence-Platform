@@ -44,6 +44,8 @@ jobs:
     runs-on: ubuntu-22.04
     needs: build-and-test
     if: github.ref == 'refs/heads/main'
+    outputs:
+      functionAppName: ${{ steps.deploy-bicep.outputs.functionAppName }}
     steps:
       - uses: actions/checkout@v4
               
@@ -53,9 +55,36 @@ jobs:
           creds: ${{ secrets.AZURE_CREDENTIALS }}
           
       - name: Deploy Bicep
+        id: deploy-bicep
         uses: azure/arm-deploy@v1
         with:
           resourceGroupName: ${{ secrets.AZURE_RG}}
           template: ./infrastructure/main.bicep
           parameters: environment=dev
           scope: ''
+          
+  deploy-function-app:
+    runs-on: ubuntu-22.04
+    needs: [build-and-test, deploy-infrastructure]
+    if: github.ref == 'refs/heads/main'
+    steps:
+      - uses: actions/checkout@v4
+      
+      - name: Download Artifact
+        uses: actions/download-artifact@v4
+        with:
+          name: functionapp-app
+          path: ./publish
+          
+      - name: Login to Azure
+        uses: azure/login@v1
+        with:
+          creds: ${{ secrets.AZURE_CREDENTIALS }}
+          
+      - name: Deploy to Azure Functions
+        uses: Azure/functions-action@v1
+        with:
+          app-name: ${{ needs.deploy-infrastructure.outputs.functionAppName }}
+          package: ./publish
+          scm-do-build-during-deployment: false
+          enable-oryx-build: false
