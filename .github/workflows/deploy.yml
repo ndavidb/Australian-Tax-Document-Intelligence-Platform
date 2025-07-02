@@ -54,7 +54,8 @@ jobs:
           
       - name: Deploy Bicep
         uses: azure/arm-deploy@v1
-        with: 
+        with:
           resourceGroupName: ${{ secrets.AZURE_RG}}
           template: ./infrastructure/main.bicep
           parameters: environment=dev
+          scope: ''
