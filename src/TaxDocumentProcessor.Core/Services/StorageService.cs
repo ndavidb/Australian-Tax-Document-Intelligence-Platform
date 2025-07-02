@@ -2,12 +2,13 @@
 using Azure.Storage.Blobs;
 using Azure.Storage.Blobs.Models;
 using System.Text.Json;
+using Microsoft.Extensions.Logging;
 using TaxDocumentProcessor.Core.Models;
 using ContentType = System.Net.Mime.ContentType;
 
 namespace TaxDocumentProcessor.Core.Services;
 
-public class StorageService(BlobServiceClient blobServiceClient) : IStorageService
+public class StorageService(BlobServiceClient blobServiceClient, ILogger<StorageService> logger) : IStorageService
 {
     public async Task<string> UploadDocumentAsync(Stream fileStream, string fileName, string containerName)
     {
@@ -73,7 +74,7 @@ public class StorageService(BlobServiceClient blobServiceClient) : IStorageServi
         }
         catch (Exception ex)
         {
-            _logger.LogError(ex, "An error occurred while moving the document '{FileName}' from '{SourceContainer}' to '{TargetContainer}'.", fileName, sourceContainer, targetContainer);
+            logger.LogError(ex, "An error occurred while moving the document '{FileName}' from '{SourceContainer}' to '{TargetContainer}'.", fileName, sourceContainer, targetContainer);
             return false;
         }
     }
@@ -96,6 +97,7 @@ public class StorageService(BlobServiceClient blobServiceClient) : IStorageServi
         }
         catch
         {
+            logger.LogError("Failed to retrieve metadata for document with ID '{DocumentId}'.", documentId);
             return null;
         }
     }
