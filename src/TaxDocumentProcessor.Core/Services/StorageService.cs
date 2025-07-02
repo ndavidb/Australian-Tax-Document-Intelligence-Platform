@@ -71,8 +71,9 @@ public class StorageService(BlobServiceClient blobServiceClient) : IStorageServi
             
             return true;
         }
-        catch
+        catch (Exception ex)
         {
+            _logger.LogError(ex, "An error occurred while moving the document '{FileName}' from '{SourceContainer}' to '{TargetContainer}'.", fileName, sourceContainer, targetContainer);
             return false;
         }
     }
