@@ -7,17 +7,9 @@ using Microsoft.Extensions.Logging;
 
 namespace TaxDocumentProcessor.Functions; // Fixed namespace
 
-public class HealthCheck
+public class HealthCheck(ILogger<HealthCheck> logger, BlobServiceClient blobServiceClient)
 {
-    private readonly ILogger<HealthCheck> _logger;
-    private readonly BlobServiceClient _blobServiceClient;
     private static readonly string[] RequiredContainers = ["receipts", "processed", "summaries"];
-
-    public HealthCheck(ILogger<HealthCheck> logger, BlobServiceClient blobServiceClient)
-    {
-        _logger = logger;
-        _blobServiceClient = blobServiceClient;
-    }
 
     [Function(nameof(HealthCheck))]
     public async Task<IActionResult> Run(
@@ -30,7 +22,7 @@ public class HealthCheck
 
             foreach (var containerName in RequiredContainers)
             {
-                var container = _blobServiceClient.GetBlobContainerClient(containerName);
+                var container = blobServiceClient.GetBlobContainerClient(containerName);
                 status[containerName] = await container.ExistsAsync();
             }
 
@@ -44,7 +36,7 @@ public class HealthCheck
         }
         catch (Exception ex)
         {
-            _logger.LogError(ex, "Health check failed");
+            logger.LogError(ex, "Health check failed");
             return new ObjectResult(new 
             { 
                 status = "unhealthy", 

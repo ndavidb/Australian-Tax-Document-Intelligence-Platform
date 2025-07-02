@@ -89,10 +89,13 @@ public class StorageService(BlobServiceClient blobServiceClient, ILogger<Storage
             if (!await blobClient.ExistsAsync())
                 return null;
 
-            var downloadInfo = await blobClient.DownloadAsync();
-            using var stream = downloadInfo.Value.Content;
+            var downloadInfo = await blobClient.DownloadContentAsync();
+            var jsonContent = downloadInfo.Value.Content.ToString();
             
-            var document = await JsonSerializer.DeserializeAsync<TaxDocument>(stream);
+            var document = JsonSerializer.Deserialize<TaxDocument>(jsonContent, new JsonSerializerOptions
+            {
+                PropertyNamingPolicy = JsonNamingPolicy.CamelCase
+            });
             return document;
         }
         catch

@@ -3,6 +3,7 @@ using Microsoft.Extensions.Azure;
 using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.Hosting;
 using Microsoft.Extensions.Logging;
+using TaxDocumentProcessor.Core.Services;
 
 var host = new HostBuilder()
     .ConfigureFunctionsWebApplication()
@@ -16,6 +17,9 @@ var host = new HostBuilder()
             clientBuilder.AddBlobServiceClient(
                 Environment.GetEnvironmentVariable("AzureWebJobsStorage"));
         });
+        
+        services.AddScoped<IStorageService, StorageService>();
+
     })
     .ConfigureLogging(logging =>
     {
