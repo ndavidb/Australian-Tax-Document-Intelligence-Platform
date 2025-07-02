@@ -1,18 +1,22 @@
-using Azure.Storage.Blobs;
-using Microsoft.Azure.Functions.Worker.Builder;
-using Microsoft.Extensions.Configuration;
+using Microsoft.Azure.Functions.Worker;
+using Microsoft.Extensions.Azure;
 using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.Hosting;
+using Microsoft.Extensions.Logging;
 
 var host = new HostBuilder()
     .ConfigureFunctionsWebApplication()
     .ConfigureServices(services =>
     {
-        var configuration = services.BuildServiceProvider().GetRequiredService<IConfiguration>();
+        services.AddApplicationInsightsTelemetryWorkerService();
+        services.ConfigureFunctionsApplicationInsights();
         
-        var connectionString = configuration["AzureWebJobsStorage"];
-        services.AddSingleton(x => new BlobServiceClient(connectionString));
+        services.AddAzureClients(clientBuilder =>
+        {
+            clientBuilder.AddBlobServiceClient(
+                Environment.GetEnvironmentVariable("AzureWebJobsStorage"));
+        });
     })
-    .Build();
+    .ConfigureLogging(logging => { logging.AddConsole();}).Build();
 
 host.Run();
