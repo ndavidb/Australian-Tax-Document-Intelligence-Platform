@@ -17,6 +17,10 @@ var host = new HostBuilder()
                 Environment.GetEnvironmentVariable("AzureWebJobsStorage"));
         });
     })
-    .ConfigureLogging(logging => { logging.AddConsole();}).Build();
+    .ConfigureLogging(logging =>
+    {
+        logging.AddConsole();
+        logging.AddApplicationInsights();
+    }).Build();
 
 host.Run();
