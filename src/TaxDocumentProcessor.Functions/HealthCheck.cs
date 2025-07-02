@@ -1,20 +1,19 @@
-﻿using Azure.Storage.Blobs;
-using Microsoft.AspNetCore.Http;
-using Microsoft.AspNetCore.Mvc;
-using Microsoft.Azure.Functions.Worker;
+﻿using Microsoft.Azure.Functions.Worker;
 using Microsoft.Azure.Functions.Worker.Http;
 using Microsoft.Extensions.Logging;
+using Azure.Storage.Blobs;
+using System.Net;
 
-namespace TaxDocumentProcessor.Functions; // Fixed namespace
+namespace TaxDocumentProcessor.Functions;
 
 public class HealthCheck(ILogger<HealthCheck> logger, BlobServiceClient blobServiceClient)
 {
     private static readonly string[] RequiredContainers = ["receipts", "processed", "summaries"];
 
     [Function(nameof(HealthCheck))]
-    public async Task<IActionResult> Run(
+    public async Task<HttpResponseData> Run(
         [HttpTrigger(AuthorizationLevel.Function, "get", Route = "health")]
-        HttpRequest req)
+        HttpRequestData req)
     {
         try
         {
@@ -26,25 +25,26 @@ public class HealthCheck(ILogger<HealthCheck> logger, BlobServiceClient blobServ
                 status[containerName] = await container.ExistsAsync();
             }
 
-            return new OkObjectResult(new
+            var response = req.CreateResponse(HttpStatusCode.OK);
+            await response.WriteAsJsonAsync(new
             {
                 status = "healthy",
                 timestamp = DateTime.UtcNow,
                 containers = status,
                 version = "1.0.0"
             });
+            return response;
         }
         catch (Exception ex)
         {
             logger.LogError(ex, "Health check failed");
-            return new ObjectResult(new 
+            var response = req.CreateResponse(HttpStatusCode.InternalServerError);
+            await response.WriteAsJsonAsync(new 
             { 
                 status = "unhealthy", 
                 error = ex.Message 
-            })
-            {
-                StatusCode = StatusCodes.Status500InternalServerError
-            };
+            });
+            return response;
         }
     }
 }
